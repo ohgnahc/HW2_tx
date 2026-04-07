@@ -9,25 +9,10 @@ ENV PYTHONUNBUFFERED=1 \
 # Set the working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy requirements and install them
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
-
-# --- OPTIMIZATION STEP ---
-# Pre-download the HuggingFace model directly into the Docker image layer.
-# This prevents the application from re-downloading the large model weights upon every container start.
-RUN python -c "\
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM; \
-model_name='sshleifer/distilbart-cnn-12-6'; \
-AutoTokenizer.from_pretrained(model_name); \
-AutoModelForSeq2SeqLM.from_pretrained(model_name) \
-"
 
 # Copy the rest of the application code
 COPY main.py .
